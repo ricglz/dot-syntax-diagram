@@ -79,7 +79,7 @@ identifier = @{ !"PUSH" ~ ("_" | alpha) ~ ("_" | alpha_num)* }
 alpha      = _{ 'a'..'z' | 'A'..'Z' }
 alpha_num  = _{ alpha | '0'..'9' }
 
-string             = ${ quote ~ inner_str ~ quote }
+string             = _{ quote ~ inner_str ~ quote }
 insensitive_string =  { "^" ~ string }
 range              =  { character ~ range_operator ~ character }
 character          = ${ single_quote ~ inner_chr ~ single_quote }
@@ -91,7 +91,7 @@ code      = @{ "x" ~ hex_digit{2} }
 unicode   = @{ "u" ~ opening_brace ~ hex_digit{2, 6} ~ closing_brace }
 hex_digit = @{ '0'..'9' | 'a'..'f' | 'A'..'F' }
 
-quote          = { "\"" }
+quote          = _{ "\"" }
 single_quote   = { "'" }
 range_operator = { ".." }
 

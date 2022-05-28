@@ -22,14 +22,15 @@ impl PestParser {
         Ok(input.as_str().to_owned())
     }
 
-    fn string(input: Node) -> Result<String> {
+    fn inner_str(input: Node) -> Result<String> {
         Ok(input.as_str().to_owned())
     }
+
     fn terminal(input: Node) -> Result<AstNode> {
         println!("terminal");
         Ok(match_nodes!(input.into_children();
-            [string(term)] => AstNode::Token(term),
-            [identifier(term)] => AstNode::Token(term),
+            [inner_str(term)] => AstNode::Token(term),
+            [identifier(term)] => AstNode::Id(term),
         ))
     }
 
