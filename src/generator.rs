@@ -1,4 +1,4 @@
-use dot_graph::{Arrow, Edge, Graph, Kind, Node};
+use dot_graph::{Edge, Graph, Kind, Node};
 
 use crate::ast::AstNode;
 
@@ -54,7 +54,7 @@ pub fn build_rule(node: &AstNode, graph: &mut Graph) {
 pub fn generate(node: &AstNode) {
     match node {
         AstNode::Grammar(rules) => {
-            let mut graph = Graph::new("grammar", Kind::Graph);
+            let mut graph = Graph::new("grammar", Kind::Digraph);
             rules.iter().for_each(|v| build_rule(v, &mut graph));
             println!("{}", graph.to_dot_string().unwrap());
         }
