@@ -1,6 +1,6 @@
 use dot_graph::{Edge, Graph, Kind, Node};
 
-use crate::ast::AstNode;
+use crate::ast::{AstNode, Rule};
 
 struct Generator {
     counter: usize,
@@ -48,36 +48,33 @@ impl Generator {
                     self.add_node_and_edge(v.clone(), from);
                 })
             }
-            kind => unreachable!("{kind:?}"),
         };
-        println!("{}", self.to_dot_string())
     }
 
-    fn build_rule(&mut self, node: &AstNode) {
-        match node {
-            AstNode::Rule(rule_name, value) => {
-                let node = self.create_node(rule_name).shape(Some("none"));
-                let name = &node.name.clone();
-                self.graph.add_node(node);
-                self.build_graph(value, name)
-            }
-            kind => unreachable!("{kind:?}"),
-        }
+    fn build_rule(&mut self, rule: &Rule) {
+        let node = self.create_node(&rule.0).shape(Some("none"));
+        let name = &node.name.clone();
+        self.graph.add_node(node);
+        self.build_graph(&rule.1, name)
     }
 
+    fn build(&mut self, rules: &[Rule]) {
+        rules.iter().for_each(|v| self.build_rule(v))
+    }
+
+    #[inline]
     fn to_dot_string(&self) -> String {
         self.graph.to_dot_string().unwrap()
     }
 
-    fn build(&mut self, node: &AstNode) {
-        match node {
-            AstNode::Grammar(rules) => rules.iter().for_each(|v| self.build_rule(v)),
-            kind => unreachable!("{kind:?}"),
-        }
+    #[inline]
+    fn print_dot_string(&self) {
+        println!("{}", self.to_dot_string())
     }
 }
 
 impl Default for Generator {
+    #[inline]
     fn default() -> Self {
         Generator {
             counter: 0,
@@ -86,8 +83,8 @@ impl Default for Generator {
     }
 }
 
-pub fn generate(node: &AstNode) {
+pub fn generate(rules: &[Rule]) {
     let mut generator = Generator::default();
-    generator.build(node);
-    println!("{}", generator.to_dot_string())
+    generator.build(rules);
+    generator.print_dot_string();
 }
