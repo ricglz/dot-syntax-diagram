@@ -1,4 +1,5 @@
 a = {"a"}
 b = {"b"}
 c = {"c"}
-test = {a ~ c}
+sequence = {a ~ c}
+options = {a | c}

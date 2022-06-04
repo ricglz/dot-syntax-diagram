@@ -16,11 +16,16 @@ fn generate_node(node: &AstNode, prefix: &str) -> Node {
     }
 }
 
+fn create_and_add_notes(exprs: &[AstNode], graph: &mut Graph, prefix: &str) -> Vec<Node> {
+    let nodes: Vec<_> = exprs.iter().map(|v| generate_node(v, prefix)).collect();
+    nodes.clone().into_iter().for_each(|v| graph.add_node(v));
+    nodes
+}
+
 fn build_graph(node: &AstNode, graph: &mut Graph, prefix: &str) {
     match node {
         AstNode::Sequence(exprs) => {
-            let nodes: Vec<_> = exprs.iter().map(|v| generate_node(v, prefix)).collect();
-            nodes.clone().into_iter().for_each(|v| graph.add_node(v));
+            let nodes = create_and_add_notes(exprs, graph, prefix);
             nodes.windows(2).for_each(|window| {
                 debug_assert!(window.len() == 2);
                 let first = &window[0];
@@ -30,12 +35,17 @@ fn build_graph(node: &AstNode, graph: &mut Graph, prefix: &str) {
             let first = nodes.get(0).unwrap();
             graph.add_edge(Edge::new(prefix, &first.name, ""))
         }
-        AstNode::Options(_) => todo!(),
+        AstNode::Options(exprs) => {
+            create_and_add_notes(exprs, graph, prefix)
+                .iter()
+                .map(|v| Edge::new(prefix, &v.name, ""))
+                .for_each(|v| graph.add_edge(v));
+        }
         AstNode::Token(_) | AstNode::Id(_) => {
             let graph_node = generate_node(node, prefix);
             let edge = Edge::new(prefix, &graph_node.name, "");
             graph.add_node(graph_node);
-            graph.add_edge(edge)
+            graph.add_edge(edge);
         }
         kind => unreachable!("{kind:?}"),
     }
@@ -45,7 +55,7 @@ pub fn build_rule(node: &AstNode, graph: &mut Graph) {
     match node {
         AstNode::Rule(rule_name, value) => {
             graph.add_node(Node::new(rule_name).shape(Some("none")));
-            build_graph(value, graph, rule_name)
+            build_graph(value, graph, rule_name);
         }
         kind => unreachable!("{kind:?}"),
     }
