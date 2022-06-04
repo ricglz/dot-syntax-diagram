@@ -1,4 +1,4 @@
 a = {"a"}
 b = {"b"}
 c = {"c"}
-test = {a ~ (b | "d") | c}
+test = {a ~ c}
