@@ -2,72 +2,92 @@ use dot_graph::{Edge, Graph, Kind, Node};
 
 use crate::ast::AstNode;
 
-fn create_edge(a: &Node, b: &Node) -> Edge {
-    Edge::new(&a.name, &b.name, "")
+struct Generator {
+    counter: usize,
+    graph: Graph,
 }
 
-fn generate_node(node: &AstNode, prefix: &str) -> Node {
-    match node {
-        AstNode::Token(token) => Node::new(&format!("{prefix}_{token}")).label(token),
-        AstNode::Id(id) => Node::new(&format!("{prefix}_{id}"))
-            .shape(Some("box"))
-            .label(id),
-        kind => unreachable!("{kind:?}"),
+impl Generator {
+    fn create_node(&mut self, label: &str) -> Node {
+        let name = &format!("_{}", self.counter);
+        self.counter += 1;
+        Node::new(name).label(label)
+    }
+
+    fn generate_node(&mut self, node: &AstNode) -> Node {
+        match node {
+            AstNode::Token(token) => self.create_node(token),
+            AstNode::Id(id) => self.create_node(id).shape(Some("box")),
+            kind => unreachable!("{kind:?}"),
+        }
+    }
+
+    fn add_node_and_edge(&mut self, node: Node, from: &str) {
+        let edge = Edge::new(from, &node.name, "");
+        self.graph.add_node(node);
+        self.graph.add_edge(edge);
+    }
+
+    fn build_graph(&mut self, node: &AstNode, from: &str) {
+        match node {
+            AstNode::Token(_) | AstNode::Id(_) => {
+                let node = self.generate_node(node);
+                self.add_node_and_edge(node, from)
+            }
+            AstNode::Sequence(tokens) => {
+                let nodes: Vec<_> = tokens.iter().map(|v| self.generate_node(v)).collect();
+                let mut from = from;
+                nodes.iter().for_each(|v| {
+                    self.add_node_and_edge(v.clone(), from);
+                    from = &v.name;
+                })
+            }
+            AstNode::Options(tokens) => {
+                let nodes: Vec<_> = tokens.iter().map(|v| self.generate_node(v)).collect();
+                nodes.iter().for_each(|v| {
+                    self.add_node_and_edge(v.clone(), from);
+                })
+            }
+            kind => unreachable!("{kind:?}"),
+        };
+        println!("{}", self.to_dot_string())
+    }
+
+    fn build_rule(&mut self, node: &AstNode) {
+        match node {
+            AstNode::Rule(rule_name, value) => {
+                let node = self.create_node(rule_name).shape(Some("none"));
+                let name = &node.name.clone();
+                self.graph.add_node(node);
+                self.build_graph(value, name)
+            }
+            kind => unreachable!("{kind:?}"),
+        }
+    }
+
+    fn to_dot_string(&self) -> String {
+        self.graph.to_dot_string().unwrap()
+    }
+
+    fn build(&mut self, node: &AstNode) {
+        match node {
+            AstNode::Grammar(rules) => rules.iter().for_each(|v| self.build_rule(v)),
+            kind => unreachable!("{kind:?}"),
+        }
     }
 }
 
-fn create_and_add_notes(exprs: &[AstNode], graph: &mut Graph, prefix: &str) -> Vec<Node> {
-    let nodes: Vec<_> = exprs.iter().map(|v| generate_node(v, prefix)).collect();
-    nodes.clone().into_iter().for_each(|v| graph.add_node(v));
-    nodes
-}
-
-fn build_graph(node: &AstNode, graph: &mut Graph, prefix: &str) {
-    match node {
-        AstNode::Sequence(exprs) => {
-            let nodes = create_and_add_notes(exprs, graph, prefix);
-            nodes.windows(2).for_each(|window| {
-                debug_assert!(window.len() == 2);
-                let first = &window[0];
-                let second = &window[1];
-                graph.add_edge(create_edge(first, second))
-            });
-            let first = nodes.get(0).unwrap();
-            graph.add_edge(Edge::new(prefix, &first.name, ""))
+impl Default for Generator {
+    fn default() -> Self {
+        Generator {
+            counter: 0,
+            graph: Graph::new("gramar", Kind::Digraph),
         }
-        AstNode::Options(exprs) => {
-            create_and_add_notes(exprs, graph, prefix)
-                .iter()
-                .map(|v| Edge::new(prefix, &v.name, ""))
-                .for_each(|v| graph.add_edge(v));
-        }
-        AstNode::Token(_) | AstNode::Id(_) => {
-            let graph_node = generate_node(node, prefix);
-            let edge = Edge::new(prefix, &graph_node.name, "");
-            graph.add_node(graph_node);
-            graph.add_edge(edge);
-        }
-        kind => unreachable!("{kind:?}"),
-    }
-}
-
-pub fn build_rule(node: &AstNode, graph: &mut Graph) {
-    match node {
-        AstNode::Rule(rule_name, value) => {
-            graph.add_node(Node::new(rule_name).shape(Some("none")));
-            build_graph(value, graph, rule_name);
-        }
-        kind => unreachable!("{kind:?}"),
     }
 }
 
 pub fn generate(node: &AstNode) {
-    match node {
-        AstNode::Grammar(rules) => {
-            let mut graph = Graph::new("grammar", Kind::Digraph);
-            rules.iter().for_each(|v| build_rule(v, &mut graph));
-            println!("{}", graph.to_dot_string().unwrap());
-        }
-        kind => unreachable!("{kind:?}"),
-    }
+    let mut generator = Generator::default();
+    generator.build(node);
+    println!("{}", generator.to_dot_string())
 }
