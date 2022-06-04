@@ -48,10 +48,17 @@ dependencies = [
 name = "dot-syntax-diagram"
 version = "0.1.0"
 dependencies = [
+ "dot_graph",
  "pest",
  "pest_consume",
  "pest_derive",
 ]
+
+[[package]]
+name = "dot_graph"
+version = "0.2.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b310edef633ba5dde93f7b916ca82ee872dd3571c22f4ee98b44877d40995e2e"
 
 [[package]]
 name = "fake-simd"
