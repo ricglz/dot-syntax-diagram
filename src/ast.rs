@@ -5,8 +5,6 @@ pub enum AstNode {
     Id(String),
     Options(Nodes),
     Sequence(Nodes),
-    Rule(String, Box<AstNode>),
-    Grammar(Nodes),
 }
 
 impl core::fmt::Debug for AstNode {
@@ -16,8 +14,14 @@ impl core::fmt::Debug for AstNode {
             Self::Id(val) => write!(f, "Id({val})"),
             Self::Options(nodes) => write!(f, "Options({nodes:#?})"),
             Self::Sequence(nodes) => write!(f, "Sequence({nodes:#?})"),
-            Self::Rule(id, rule) => write!(f, "Rule({id}, {rule:?})"),
-            Self::Grammar(nodes) => write!(f, "Grammar({nodes:#?})"),
         }
+    }
+}
+
+pub struct Rule(pub String, pub AstNode);
+
+impl core::fmt::Debug for Rule {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Rule({}, {:?})", self.0, self.1)
     }
 }

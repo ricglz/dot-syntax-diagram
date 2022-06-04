@@ -10,6 +10,7 @@ struct PestParser;
 use pest_consume::Error;
 type Result<T> = std::result::Result<T, Error<Rule>>;
 type Node<'i> = pest_consume::Node<'i, Rule, bool>;
+type Rules = Vec<crate::ast::Rule>;
 
 // This is the other half of the parser, using pest_consume.
 #[pest_consume::parser]
@@ -27,7 +28,6 @@ impl PestParser {
     }
 
     fn terminal(input: Node) -> Result<AstNode> {
-        println!("terminal");
         Ok(match_nodes!(input.into_children();
             [inner_str(term)] => AstNode::Token(term),
             [identifier(term)] => AstNode::Id(term),
@@ -35,7 +35,6 @@ impl PestParser {
     }
 
     fn term(input: Node) -> Result<AstNode> {
-        println!("term");
         Ok(match_nodes!(input.into_children();
             [terminal(term)] => term,
             [expression(term)] => term,
@@ -43,7 +42,6 @@ impl PestParser {
     }
 
     fn seq(input: Node) -> Result<AstNode> {
-        println!("seq");
         Ok(match_nodes!(input.into_children();
             [term(term)] => term,
             [term(terms)..] => AstNode::Sequence(terms.collect()),
@@ -51,31 +49,26 @@ impl PestParser {
     }
 
     fn expression(input: Node) -> Result<AstNode> {
-        println!("expression");
         Ok(match_nodes!(input.into_children();
             [seq(term)] => term,
             [seq(terms)..] => AstNode::Options(terms.collect()),
         ))
     }
 
-    fn grammar_rule(input: Node) -> Result<AstNode> {
+    fn grammar_rule(input: Node) -> Result<crate::ast::Rule> {
         Ok(match_nodes!(input.into_children();
-            [identifier(id), expression(expr)] => {
-                AstNode::Rule(id, Box::new(expr))
-            },
+            [identifier(id), expression(expr)] => crate::ast::Rule(id, expr),
         ))
     }
 
-    fn grammar_rules(input: Node) -> Result<AstNode> {
+    fn grammar_rules(input: Node) -> Result<Rules> {
         Ok(match_nodes!(input.into_children();
-            [grammar_rule(rules).., _] => {
-                AstNode::Grammar(rules.collect())
-            },
+            [grammar_rule(rules).., _] => rules.collect(),
         ))
     }
 }
 
-pub fn parse(source: &str, debug: bool) -> Result<AstNode> {
+pub fn parse(source: &str, debug: bool) -> Result<Rules> {
     let inputs = PestParser::parse_with_userdata(Rule::grammar_rules, source, debug)?;
     // There should be a single root node in the parsed tree
     let input = inputs.single()?;
