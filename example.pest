@@ -3,4 +3,4 @@ b = {"b"}
 c = {"c"}
 sequence = {a ~ c}
 options = {a | c}
-mixed = { a ~ b | c }
+/* mixed = { a ~ b | c } */

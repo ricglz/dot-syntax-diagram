@@ -28,7 +28,7 @@ impl Generator {
         self.graph.add_edge(edge);
     }
 
-    fn build_graph(&mut self, node: &AstNode, from: &str) {
+    fn parse_node(&mut self, node: &AstNode, from: &str) {
         match node {
             AstNode::Token(_) | AstNode::Id(_) => {
                 let node = self.generate_node(node);
@@ -55,7 +55,7 @@ impl Generator {
         let node = self.create_node(&rule.0).shape(Some("none"));
         let name = &node.name.clone();
         self.graph.add_node(node);
-        self.build_graph(&rule.1, name)
+        self.parse_node(&rule.1, name)
     }
 
     fn build(&mut self, rules: &[Rule]) {
