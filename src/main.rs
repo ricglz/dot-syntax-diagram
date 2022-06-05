@@ -1,4 +1,5 @@
 mod ast;
+mod generator;
 mod parser;
 
 fn main() {
@@ -11,4 +12,5 @@ fn main() {
     }
     let ast = response.unwrap();
     println!("{ast:#?}");
+    generator::generate(&ast);
 }

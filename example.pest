@@ -1,4 +1,6 @@
 a = {"a"}
 b = {"b"}
 c = {"c"}
-test = {a ~ (b | "d") | c}
+sequence = {a ~ c}
+options = {a | c}
+/* mixed = { a ~ b | c } */
