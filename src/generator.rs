@@ -83,8 +83,9 @@ impl Default for Generator {
     }
 }
 
-pub fn generate(rules: &[Rule]) {
+pub fn generate(rules: &[Rule]) -> String {
     let mut generator = Generator::default();
     generator.build(rules);
     generator.print_dot_string();
+    generator.to_dot_string()
 }
